@@ -1,32 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 function generateFlights(from: string, to: string, date: string) {
-  const airlines = ['中国国航', '东方航空', '南方航空', '海南航空'];
-  const flights = [];
-  for (let i = 0; i < 3; i++) {
-    const depHour = 8 + i * 2;
-    const arrHour = depHour + 2;
-    flights.push({
-      flight: `CA10${i}`,
-      airline: airlines[i % airlines.length],
-      from,
-      to,
-      departure: `${date}T${depHour.toString().padStart(2, '0')}:00:00`,
-      arrival: `${date}T${arrHour.toString().padStart(2, '0')}:00:00`,
-    });
-  }
-  return flights;
+  // Return example data, can be dynamic
+  return [
+    {
+      flight: 'ZH9890',
+      airline: 'Shenzhen Airlines',
+      departure: '06/15 14:00',
+      arrival: '06/15 18:00',
+      duration: '4h',
+      price: '¥1154',
+      seats: 55,
+    },
+    {
+      flight: 'ZH6157',
+      airline: 'Shenzhen Airlines',
+      departure: '06/15 19:00',
+      arrival: '06/15 23:00',
+      duration: '4h',
+      price: '¥2299',
+      seats: 55,
+    },
+    {
+      flight: 'CA7967',
+      airline: 'Air China',
+      departure: '06/16 00:00',
+      arrival: '06/16 03:00',
+      duration: '3h',
+      price: '¥942',
+      seats: 72,
+    },
+    {
+      flight: '3U2496',
+      airline: 'Sichuan Airlines',
+      departure: '06/16 00:00',
+      arrival: '06/16 04:00',
+      duration: '4h',
+      price: '¥1969',
+      seats: 96,
+    },
+  ];
 }
 
 export async function POST(req: NextRequest) {
   const { from, to, date } = await req.json();
   const flights = generateFlights(from, to, date);
-  const markdownRows = flights.map(f => `| 航班号 | ${f.flight} |\n| 航司 | ${f.airline} |\n| 出发地 | ${f.from} |\n| 目的地 | ${f.to} |\n| 起飞时间 | ${f.departure} |\n| 到达时间 | ${f.arrival} |`).join('\n---\n');
-  const markdown = `| 字段 | 信息 |\n|:-----|:-----|\n${markdownRows}`;
+  const markdownHeader = `| Flight No. | Airline | Departure Time | Arrival Time | Duration | Price | Seats Left |\n|:-----------|:-------------------|:---------------|:-------------|:---------|:-------|:-----------|`;
+  const markdownRows = flights.map(f =>
+    `| ${f.flight} | ${f.airline} | ${f.departure} | ${f.arrival} | ${f.duration} | ${f.price} | ${f.seats} |`
+  ).join('\n');
+  const markdown = `${markdownHeader}\n${markdownRows}`;
   return NextResponse.json({
     raw: flights,
     markdown,
     type: 'markdown',
-    desc: `以下是${from}到${to}，${date}的航班信息，供参考。`
+    desc: `Here are the available flights from ${from} to ${to} on ${date}.`
   });
 } 
