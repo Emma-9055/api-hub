@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { POST as handleFlightsApi } from '@/app/api/flights/route';
 
 async function searchFlights({ from, to, date }: { from: string; to: string; date: string }) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/flights`, {
+  const request = new NextRequest('http://localhost/api/flights', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ from, to, date }),
+    headers: { 'Content-Type': 'application/json' },
   });
-  const data = await res.json();
-  return data;
+  const response = await handleFlightsApi(request);
+  return response.json();
 }
 
 async function bookFlight({ flightNo, name, contact }: { flightNo: string; name: string; contact: string }) {
@@ -61,9 +62,14 @@ const TOOL_MAPPING = {
   bookFlight,
 };
 
+const apiKey = process.env.OPENROUTER_API_KEY || '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';
+
+console.log('API Key available:', apiKey ? 'Yes' : 'No');
+console.log('API Key starts with:', apiKey?.substring(0, 10));
+
 const openai = new OpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: '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',
+  apiKey: apiKey,
   defaultHeaders: {
     'HTTP-Referer': 'http://localhost:3000',
     'X-Title': 'API-Hub-Chatbot',
@@ -74,8 +80,10 @@ export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json();
     
+    console.log('Making OpenAI request with model: google/gemini-2.5-flash-preview');
+    
     const response = await openai.chat.completions.create({
-      model: 'openai/gpt-4o',
+      model: 'google/gemini-2.5-flash-preview',
       messages: messages,
       tools,
     });
@@ -104,7 +112,7 @@ export async function POST(req: NextRequest) {
       
       // 再次调用 LLM 生成最终回复
       const finalResponse = await openai.chat.completions.create({
-        model: 'openai/gpt-4o',
+        model: 'google/gemini-2.5-flash-preview',
         messages: updatedMessages,
       });
       
